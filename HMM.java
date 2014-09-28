@@ -34,6 +34,7 @@ public class HMM {
 			int currentTagCount = currentWordCount;
 			wordTag = stk.nextToken();
 
+			// System.out.println(input);
 			if (wordTag.equals("WORDTAG")) {
 				currentTag = stk.nextToken();
 				currentWord = stk.nextToken();
@@ -72,16 +73,16 @@ public class HMM {
 		for (String word : emissionParams.keySet()) {
 			TreeMap<Double, String> currentTreeMap = emissionParams.get(word);
 			for (Double d : currentTreeMap.keySet()) {
-				System.out.println(word + " " + currentTreeMap.get(d) + " "
-						+ d.doubleValue());
+				// System.out.println(word + " " + currentTreeMap.get(d) + " "
+				// + d.doubleValue());
 			}
 		}
 
 		return emissionParams;
 	}
 
-	public static void rareCounter(String countFile, String dataFile)
-			throws IOException {
+	public static HashMap<String, Integer> rareCounter(String countFile,
+			String dataFile) throws IOException {
 
 		HashMap<String, Integer> wordToCount = new HashMap<String, Integer>();
 
@@ -102,6 +103,7 @@ public class HMM {
 			wordTag = stk.nextToken();
 
 			if (wordTag.equals("WORDTAG")) {
+				// System.out.println(input);
 				stk.nextToken();
 				currentWord = stk.nextToken();
 				if (wordToCount.containsKey(currentWord)) {
@@ -115,10 +117,11 @@ public class HMM {
 		br = new BufferedReader(in);
 		String tag;
 		String write;
-		
+
 		File rareCounts = new File("ner_train_rare.dat");
-	    BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(rareCounts));
-		
+		BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
+				rareCounts));
+
 		while ((input = br.readLine()) != null) {
 			stk = new StringTokenizer(input);
 			if (input.length() > 1) {
@@ -128,17 +131,70 @@ public class HMM {
 					currentWord = "_RARE_";
 				}
 				write = currentWord + " " + tag;
-				System.out.println(write);
-				bufferedWriter.write(write); 
+				// System.out.println(write);
+				bufferedWriter.write(write);
 				bufferedWriter.write("\n");
-			}
-			else{
+			} else {
 				bufferedWriter.write("\n");
 			}
 		}
+		bufferedWriter.close();
+
+		return wordToCount;
+	}
+
+	public static void tagger(String devDataFile, String countFile,
+			String trainDataFile) throws IOException {
+
+		HashMap<String, TreeMap<Double, String>> emissionParams = eParamsCalculator(countFile);
+		HashMap<String, Integer> wordToCount = rareCounter("ner_0.counts",
+				trainDataFile);
+
+		FileReader in = new FileReader(devDataFile);
+		BufferedReader br = new BufferedReader(in);
+
+		File rareCounts = new File("dev_results.dat");
+		BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
+				rareCounts));
+
+		String input;
+		double logP;
+		String maxTag;
+
+		while ((input = br.readLine()) != null) {
+			if (input.length() > 0) {
+				if (wordToCount.containsKey(input)) {
+					if (wordToCount.get(input).intValue() < 5) {
+						logP = Math.log(emissionParams.get("_RARE_").lastKey()
+								.doubleValue())
+								/ Math.log(2);
+						maxTag = emissionParams.get("_RARE_").lastEntry()
+								.getValue();
+					} else {
+						logP = Math.log(emissionParams.get(input).lastKey()
+								.doubleValue())
+								/ Math.log(2);
+						maxTag = emissionParams.get(input).lastEntry()
+								.getValue();
+					}
+				} else {
+					logP = Math.log(emissionParams.get("_RARE_").lastKey()
+							.doubleValue())
+							/ Math.log(2);
+					maxTag = emissionParams.get("_RARE_").lastEntry()
+							.getValue();
+				}
+				bufferedWriter.write(input + " " + maxTag + " " + logP + "\n");
+			}
+			else {
+				bufferedWriter.write("\n");
+			}
+		}
+		bufferedWriter.close();
+
 	}
 
 	public static void main(String[] args) throws IOException {
-		rareCounter("ner.counts", "ner_train.dat");
+		tagger("ner_dev.dat", "ner.counts", "ner_train.dat");
 	}
 }
