@@ -18,14 +18,13 @@ import java.util.TreeMap;
  */
 public class ViterbiTagger {
 
-	public static void viterbiTagger(String devDataFile, String countFile,
-			String trainDataFile) throws IOException {
+	public static void viterbiTagger(String devDataFile, String countFile, String resultFile) throws IOException {
 
 		FileReader in = new FileReader(devDataFile);
 		BufferedReader br = new BufferedReader(in);
 
 		// Store results from Viterbi tagging in a new file.
-		File taggedResults = new File("dev_results_viterbi.dat");
+		File taggedResults = new File(resultFile);
 		BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
 				taggedResults));
 
@@ -43,7 +42,7 @@ public class ViterbiTagger {
 				sentenceArrayList.add(input);
 				input = br.readLine();
 			}
-			HashMap<Integer, HashMap<String, Double>> sentencePiTable = piTableGenerator(sentenceArrayList);
+			HashMap<Integer, HashMap<String, Double>> sentencePiTable = piTableGenerator(sentenceArrayList, countFile);
 			for (int i = 0; i < sentenceArrayList.size(); i++) {
 				maxProb = 0.0;
 				maxTag = "";
@@ -55,7 +54,7 @@ public class ViterbiTagger {
 						maxTag = s.substring(s.indexOf(' '));
 					}
 				}
-				String write = currentWord + maxTag + " " + maxProb + "\n";
+				String write = currentWord + maxTag + " " + Math.log(maxProb)/Math.log(2) + "\n";
 				bufferedWriter.write(write);
 			}
 			bufferedWriter.write("\n");
@@ -75,10 +74,10 @@ public class ViterbiTagger {
 	 * @throws IOException
 	 */
 	public static HashMap<Integer, HashMap<String, Double>> piTableGenerator(
-			ArrayList<String> sentenceArrayList) throws IOException {
+			ArrayList<String> sentenceArrayList, String countFile) throws IOException {
 
 		HashMap<Integer, HashMap<String, Double>> piValues = new HashMap<Integer, HashMap<String, Double>>();
-		piFiller(sentenceArrayList, piValues);
+		piFiller(sentenceArrayList, piValues, countFile);
 		return piValues;
 	}
 
@@ -91,14 +90,14 @@ public class ViterbiTagger {
 	 * @throws IOException
 	 */
 	private static void piFiller(ArrayList<String> sentenceArrayList,
-			HashMap<Integer, HashMap<String, Double>> piValues)
+			HashMap<Integer, HashMap<String, Double>> piValues, String countFile)
 			throws IOException {
 
 		HashMap<String, TreeMap<Double, String>> emissionParams = HMMHelpers
-				.eParamsCalculator("ner.counts");
+				.eParamsCalculator(countFile);
 
 		HashMap<String, Integer> nGramMap = HMMHelpers
-				.nGramMapper("ner.counts");
+				.nGramMapper(countFile);
 
 		HashMap<String, Integer> wordToCount = HMMHelpers.rareWordMarker(
 				"ner_0.counts", "ner_train.dat");
@@ -178,6 +177,6 @@ public class ViterbiTagger {
 	}
 
 	public static void main(String[] args) throws IOException {
-		viterbiTagger("ner_dev.dat", "ner.counts", "ner_train.dat");
+		viterbiTagger("ner_dev.dat", "ner_1.counts", "dev_results_viterbi.dat");
 	}
 }

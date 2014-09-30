@@ -98,7 +98,8 @@ public class HMMHelpers {
 	}
 
 	/**
-	 * Marks rare words in the corpus by checking whether their count is less than 5.
+	 * Marks rare words in the corpus by checking whether their count is less
+	 * than 5.
 	 * 
 	 * @param countFile
 	 * @param dataFile
@@ -168,15 +169,18 @@ public class HMMHelpers {
 	}
 
 	/**
-	 * Marks rare words in the corpus by checking whether their count is less than 5.
+	 * Marks rare words in the corpus by checking whether their count is less
+	 * than 5. Further it categorizes these rare words into buckets - words with
+	 * all capitals, words with all numbers, words containing dashes, other
+	 * words marked simply by "_RARE_" as before.
 	 * 
 	 * @param countFile
 	 * @param dataFile
 	 * @return
 	 * @throws IOException
 	 */
-	public static void lowFrequencyTagger(String countFile,
-			String dataFile) throws IOException {
+	public static void lowFrequencyTagger(String countFile, String dataFile)
+			throws IOException {
 
 		HashMap<String, Integer> wordToCount = new HashMap<String, Integer>();
 
@@ -212,7 +216,7 @@ public class HMMHelpers {
 		String tag;
 		String write;
 
-		File rareCounts = new File("ner_train_rare.dat");
+		File rareCounts = new File("ner_train_low_freq.dat");
 		BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
 				rareCounts));
 
@@ -222,16 +226,13 @@ public class HMMHelpers {
 				currentWord = stk.nextToken();
 				tag = stk.nextToken();
 				if (wordToCount.get(currentWord).intValue() < 5) {
-					if(allCaps(currentWord)) {
+					if (allCaps(currentWord)) {
 						currentWord = "_ALLCAPS_";
-					}
-					else if(allNumbers(currentWord)) {
+					} else if (allNumbers(currentWord)) {
 						currentWord = "_NUMBERS_";
-					}
-					else if(currentWord.contains("-")) {
+					} else if (currentWord.contains("-")) {
 						currentWord = "_DASHED_";
-					}
-					else{
+					} else {
 						currentWord = "_RARE_";
 					}
 				}
@@ -247,21 +248,21 @@ public class HMMHelpers {
 	}
 
 	private static boolean allCaps(String word) {
-		for(int i = 0; i < word.length(); i++) {
-			if(word.charAt(i) < 65 || word.charAt(i) > 90)
+		for (int i = 0; i < word.length(); i++) {
+			if (word.charAt(i) < 65 || word.charAt(i) > 90)
 				return false;
 		}
 		return true;
 	}
-	
+
 	private static boolean allNumbers(String word) {
 		for (int i = 0; i < word.length(); i++) {
-			if(word.charAt(i) < 48 || word.charAt(i) > 57)
+			if (word.charAt(i) < 48 || word.charAt(i) > 57)
 				return false;
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Creates a mapping for lines of the form <count> n-GRAM (y1...yn) from
 	 * n-Gram (y1...yn) to <count>
@@ -336,7 +337,7 @@ public class HMMHelpers {
 		StringTokenizer stk;
 		String u, v, w;
 
-		HashMap<String, Integer> mGramMap = nGramMapper("ner.counts");
+		HashMap<String, Integer> mGramMap = nGramMapper("ner_1.counts");
 
 		while ((trigramInput = br.readLine()) != null) {
 			stk = new StringTokenizer(trigramInput);
